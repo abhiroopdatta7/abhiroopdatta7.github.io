@@ -110,18 +110,6 @@ or
 docker image ls
 ```
 
-### List Containors
-
-```shel
-docker ps
-```
-
-or
-
-```shell
-docker container ls
-```
-
 
 
 ### Pull Image
@@ -136,5 +124,25 @@ docker pull $image-name
 
 ```shell
 docker run --rm --name $container-name $image-name:$tag
+```
+
+
+
+### List Containors
+
+```shel
+docker ps
+```
+
+or
+
+```shell
+docker container ls
+```
+
+The above command will only show the list of containers running. To show all the containers: 
+
+```shell
+docker ps -a
 ```
 
