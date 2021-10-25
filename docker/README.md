@@ -19,6 +19,9 @@ through a hyper-visor. In general, VMS provide an environment with more resource
 ![vm_vs_docker](images/vm_vs_docker.png)
 
 ## Lifecycle
+
+![docker_life_cycle](/Users/abhdatta/play-ground/github/abhiroopdatta7.github.io/docker/images/docker_life_cycle.png)
+
 - Initially, the Docker container will be in the created state.
 - Then the Docker container goes into the running state when the Docker run command is used.
 - The Docker kill command is used to kill an existing Docker container.
