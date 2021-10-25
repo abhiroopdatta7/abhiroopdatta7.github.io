@@ -83,5 +83,5 @@ main(int argc, char **argv)
 
 ## Eexplanation
 
-Here in this source code, we are doing `rte_eal_init()` to initialize dpdk, this accepts `argc` and `argv[]][]`
+Here in this source code, we are doing `rte_eal_init()` to initialize dpdk, this accepts `argc` and `argv[][]`
 
