@@ -29,6 +29,11 @@ through a hyper-visor. In general, VMS provide an environment with more resource
 
 
 ## Install
+
+### Mac
+
+In Mac Systems you need to install Docker Desktop. The dowloader is [here](https://docs.docker.com/desktop/mac/install/).
+
 ### Ubuntu 20.0.4
 1. Uninstall old version
 
@@ -206,4 +211,7 @@ Shows top-level processes within the container.
 ````shell
 docker top ${containor-id}
 ````
+
+## More
+- [Dockerfile](Dockerfile.md)
 
