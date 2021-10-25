@@ -20,7 +20,7 @@ through a hyper-visor. In general, VMS provide an environment with more resource
 
 ## Lifecycle
 
-![docker_life_cycle](/Users/abhdatta/play-ground/github/abhiroopdatta7.github.io/docker/images/docker_life_cycle.png)
+![docker_life_cycle](images/docker_life_cycle.png)
 
 - Initially, the Docker container will be in the created state.
 - Then the Docker container goes into the running state when the Docker run command is used.
