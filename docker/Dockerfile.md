@@ -81,10 +81,7 @@ The `CMD` instruction has three forms:
 - `CMD command param1 param2` (*shell* form)
 
 ```dockerfile
-FROM
-
-
-Learn more about the "FROM" Dockerfile command. ubuntu
+FROM ubuntu
 CMD echo "This is a test." | wc -
 ```
 
@@ -129,7 +126,7 @@ ENV <key>=<value> ...
 Example:
 
 ```dockerfile
-DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 ```
 
 ### ADD or COPY
