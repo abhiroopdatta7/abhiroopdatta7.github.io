@@ -1,4 +1,4 @@
-[Home](https://raw.githubusercontent.com/abhiroopdatta7/abhiroopdatta7.github.io/main/README.md)
+[Home](README.md)
 
 # DPDK 20.11.3
 
@@ -8,7 +8,7 @@ DPDK was created in 2010 by Intel and made available under a permissive open sou
 
 ## Important Links
 
-- [Home](https://www.dpdk.org/)
+- [DPDK Home](https://www.dpdk.org/)
 - [LTS Version 20.11.3](http://fast.dpdk.org/rel/dpdk-20.11.3.tar.xz)
 - [Linux Guide](http://doc.dpdk.org/guides-20.11/)
 - [Release Note](http://doc.dpdk.org/guides/rel_notes/release_20_11.html)
