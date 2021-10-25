@@ -29,6 +29,7 @@ through a hyper-visor. In general, VMS provide an environment with more resource
 
 
 ## Install
+### Ubuntu 20.0.4
 1. Uninstall old version
 
 ```shell
@@ -98,37 +99,39 @@ docker run --rm hello-world
 ```
 
 ## Commads
-### List images
 
+### Image
+
+#### List
 ```she
 docker iamges
 ```
-
 or
-
 ```she
 docker image ls
 ```
 
-
-
-### Pull Image
-
+#### Pull
 ```shell
-docker pull $image-name
+docker pull ${image-name}
+```
+
+#### Remove
+```shell
+docker rmi ${containor-id}
 ```
 
 
 
-### Run a Docker container
+### Containers
+
+#### Run
 
 ```shell
-docker run --rm --name $container-name $image-name:$tag
+docker run --rm --name ${container-name} ${image-name}:${tag}
 ```
 
-
-
-### List Containors
+#### List
 
 ```shel
 docker ps
@@ -145,4 +148,62 @@ The above command will only show the list of containers running. To show all the
 ```shell
 docker ps -a
 ```
+
+#### Pause
+
+```shell
+docker pause ${containor-id}
+```
+
+#### Unpause
+
+```shell
+docker unpause ${containor-id}
+```
+
+#### Stop
+
+```shell
+docker stop ${containor-id}
+```
+
+#### Start
+
+```shell
+docker start ${containor-id}
+```
+
+#### Attach
+```shell
+docker attach ${containor-id}
+```
+
+#### Kill
+
+```shell
+docker kill ${containor-id}
+```
+
+#### Remove
+Removes the Docker Container.
+```shell
+docker rm ${containor-id}
+```
+
+#### Stats
+```shell
+docker stats ${containor-id}
+```
+
+#### Inspect
+Shows the Information for the container.
+```shell
+docker inspect ${containor-id}
+```
+
+#### Top
+Shows top-level processes within the container.
+````shell
+docker top ${containor-id}
+````
 
