@@ -280,7 +280,28 @@ Each instruction creates one layer:
 
 ## Multi-Stage
 
-- TODO
+```dockerfile
+ARG BUILD_BASE_IMAGE
+ARG RUN_BASE_IMAGE
+ARG VERSION
+
+FROM $BUILD_BASE_IMAGE AS builder
+USER root
+WORKDIR /home/build/app
+COPY . .
+RUN make
+
+FROM $RUN_BASE_IMAGE
+USER root
+WORKDIR /home/app
+ENV VERSION=$VERSION
+ENV LD_LIBRARY_PATH=/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/
+COPY --from=builder /home/build/app .
+ENTRYPOINT "/home/app/bin-app"
+
+```
+
+
 
 ## Note:
 
