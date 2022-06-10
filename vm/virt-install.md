@@ -13,7 +13,17 @@ sudo apt-get install -y virtinst
 
 ## Create a Guest VM   
 ```bash
-virt-install --network bridge:virbr0 --name testvm1 --os-variant=centos7.0 --ram=1024 --vcpus=1 --disk path=/var/testvm1
+sudo virt-install \
+        --name vm1 \
+        --os-type linux \
+        --os-variant ubuntu20.04 \
+        --ram=4096 \
+        --vcpus 4 \
+        --disk path=/home/vhd/vm1.qcow2,bus=virtio,size=5 \
+        --cdrom=/home/osmedia/ubuntu-20.04.3-live-server-amd64.iso \
+        --check all=off \
+        --graphics vnc,listen=0.0.0.0 \
+        --network type=direct,source=eno1,source_mode=bridge,model=virtio
 ```
 
 ## The virt-install command options
