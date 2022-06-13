@@ -106,7 +106,7 @@ I happen to be debugging this on Ubuntu, but the Linux distro shouldn't matter f
 ## 4. Back Trace
 
 Stack back traces show how we arrived at the point of fail, and are often enough to help identify a common problem. It's usually the first command I use in a gdb session: bt (short for backtrace):
-
+```
 (gdb) bt  
 #0  0x00007f0a37aac40d in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5  
 #1  0x00007f0a37aa07e6 in wrefresh () from /lib/x86_64-linux-gnu/libncursesw.so.5  
@@ -129,7 +129,7 @@ Stack back traces show how we arrived at the point of fail, and are often enough
 #18 0x00007f0a3be10830 in __libc_start_main (main=0x49daf0 <main>, argc=2, argv=0x7ffd33d94838, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>,  
     stack_end=0x7ffd33d94828) at ../csu/libc-start.c:291  
 #19 0x000000000049da19 in _start ()
-
+```
 Read from bottom up, to go from parent to child. The "??" entries are where symbol translation failed. Stack walking – which produces the stack trace – can also fail. In that case you'll likely see a single valid frame, then a small number of bogus addresses. If symbols or stacks are too badly broken to make sense of the stack trace, then there are usually ways to fix it: installing debug info packages (giving gdb more symbols, and letting it do DWARF-based stack walks), or recompiling the software from source with frame pointers and debugging information (-fno-omit-frame-pointer -g). Many of the above "??" entries can be fixed by adding the python-dbg package.
 
 This particular stack doesn't look very helpful: frames 5 to 17 (indexed on the left) are Python internals, although we can't see the Python methods (yet). Then frame 4 is the _curses library, then we're in libncursesw. Looks like wgetch()->wrefresh()->doupdate(). Just based on the names, I'd guess a window refresh. Why would that core dump?
@@ -137,7 +137,7 @@ This particular stack doesn't look very helpful: frames 5 to 17 (indexed on the 
 ## 5. Disassembly
 
 I'll start by disassembling the function we segfaulted in, doupdate():
-
+```
 (gdb) disas doupdate  
 Dump of assembler code for function doupdate:  
    0x00007f0a37aac2e0 <+0>:   push   %r15  
@@ -162,7 +162,7 @@ Dump of assembler code for function doupdate:
    0x00007f0a37aac41f <+319>: movswl 0x74(%rdx),%edi  
    0x00007f0a37aac423 <+323>: mov    %rax,0x40(%rsp)  
 [...]
-
+```
 Output truncated. (I could also have just typed "disas" and it would have defaulted to doupdate.)
 
 The arrow "=>" is pointing to our segfault address, which is doing a mov 0x10(%rsi),%rdi: a move from the memory pointed to in the %rsi register plus an offset of 0x10, to the %rdi register. I'll check the state of the registers next.
@@ -170,7 +170,7 @@ The arrow "=>" is pointing to our segfault address, which is doing a mov 0x10(%
 ## 6. Check Registers
 
 Printing register state using i r (short for info registers):
-
+```
 (gdb) i r  
 rax            0x0  0  
 rbx            0x1993060    26816608  
@@ -196,13 +196,13 @@ ds             0x0  0
 es             0x0  0  
 fs             0x0  0  
 gs             0x0  0
-
+```
 Well, %rsi is zero. There's our problem! Zero is unlikely a valid address, and this type of segfault is a common software bug: dereferencing an uninitialized or NULL pointer.
 
 ## 7. Memory Mappings
 
 You can double check if zero is valid using i proc m (short for info proc mappings):
-
+```
 (gdb) i proc m  
 Mapped address spaces:
 
@@ -224,7 +224,7 @@ Start Addr           End Addr       Size     Offset objfile
   0x7f0a38266000     0x7f0a3828b000    0x25000        0x0 /lib/x86_64-linux-gnu/libtinfo.so.5.9  
   0x7f0a3828b000     0x7f0a3848a000   0x1ff000    0x25000 /lib/x86_64-linux-gnu/libtinfo.so.5.9  
 [...]
-
+```
 The first valid virtual address is 0x400000. Anything below that is invalid, and if referenced, will trigger a segmentation fault.
 
 At this point there are several different ways to dig further. I'll start with some instruction stepping.
@@ -232,16 +232,16 @@ At this point there are several different ways to dig further. I'll start with s
 ## 8. Breakpoints
 
 Back to the disassembly:
-
+```
    0x00007f0a37aac401 <+289>:   mov    0x20cb68(%rip),%rax        # 0x7f0a37cb8f70  
    0x00007f0a37aac408 <+296>:   mov    (%rax),%rsi  
    0x00007f0a37aac40b <+299>:   xor    %eax,%eax  
 => 0x00007f0a37aac40d <+301>:   mov    0x10(%rsi),%rdi
-
+```
 Reading these four instructions: it looks like it's pulling something from the stack into %rax, then dereferencing %rax into %rsi, the setting %eax to zero (the xor is an optimization, instead of doing a mov of $0), and then we dereference %rsi with an offset, although we know %rsi is zero. This sequence is for walking data structures. Maybe %rax would be interesting, but it's been set to zero by the prior instruction, so we can't see it in the core dump register state.
 
 I can set a breakpoint on doupdate+289, then single-step through each instruction to see how the registers are set and change. First, I need to launch gdb so that we're executing the program live:
-
+```
 # gdb `which python`  
 GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1  
 Copyright (C) 2016 Free Software Foundation, Inc.  
@@ -258,14 +258,15 @@ Find the GDB manual and other documentation resources online at:
 For help, type "help".  
 Type "apropos word" to search for commands related to "word"...  
 Reading symbols from /usr/bin/python...(no debugging symbols found)...done.
-
+```
 Now to set the breakpoint using b (short for break):
-
+```
 (gdb) b *doupdate + 289  
+```
 No symbol table is loaded.  Use the "file" command.
 
 Oops. I wanted to show this error to explain why we often start out with a breakpoint on main, at which point the symbols are likely loaded, and then setting the real breakpoint of interest. I'll go straight to doupdate function entry, run the problem, then set the offset breakpoint once it hits the function:
-
+```
 (gdb) b doupdateFunction "doupdate" not defined.  
 Make breakpoint pending on future shared library load? (y or [n]) yBreakpoint 1 (doupdate) pending.  
 (gdb) r cachetop.py  
@@ -280,7 +281,7 @@ Breakpoint 1, 0x00007ffff34ad2e0 in doupdate () from /lib/x86_64-linux-gnu/libnc
 Continuing.
 
 Breakpoint 2, 0x00007ffff34ad401 in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5
-
+```
 We've arrived at our breakpoint.
 
 If you haven't done this before, the r (run) command takes arguments that will be passed to the gdb target we specified earlier on the command line (python). So this ends up running "python cachetop.py".
@@ -288,7 +289,7 @@ If you haven't done this before, the r (run) command takes arguments that will
 ## 9. Stepping
 
 I'll step one instruction (si, short for stepi) then inspect registers:
-
+```
 (gdb) si0x00007ffff34ad408 in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5  
 (gdb) i rrax            0x7ffff3e8f948   140737285519688  
 rbx            0xaea060 11444320  
@@ -316,12 +317,12 @@ fs             0x0  0
 gs             0x0  0  
 (gdb) p/a 0x7ffff3e8f948  
 $1 = 0x7ffff3e8f948 <cur_term>
-
+```
 Another clue. So the NULL pointer we're dereferencing looks like it's in a symbol called "cur_term" (p/a is short for print/a, where "/a" means format as an address). Given this is ncurses, is our TERM environment set to something odd?
-
+```
 # echo $TERM  
 xterm-256color
-
+```
 I tried setting that to vt100 and running the program, but it hit the same segfault.
 
 Note that I've inspected just the first invocation of doupdate(), but it could be called multiple times, and the issue may be a later invocation. I can step through each by running c (short for continue). That will be ok if it's only called a few times, but if it's called a few thousand times I'll want a different approach. (I'll get back to this in section 15.)
@@ -351,7 +352,7 @@ Type "apropos word" to search for commands related to "word"...
 Reading symbols from /usr/bin/python...(no debugging symbols found)...done.
 ```
 Now I'll set a breakpoint on doupdate as before, but once it's hit, I'll enable recording, then continue the program and let it crash. Recording adds considerable overhead, so I don't want to add it on main.
-
+```
 (gdb) b doupdateFunction "doupdate" not defined.  
 Make breakpoint pending on future shared library load? (y or [n]) yBreakpoint 1 (doupdate) pending.  
 (gdb) r cachetop.py  
@@ -366,9 +367,9 @@ Continuing.
 
 Program received signal SIGSEGV, Segmentation fault.  
 0x00007ffff34ad40d in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5
-
+```
 At this point I can reverse-step through lines or instructions. It works by playing back register state from our recording. I'll move back in time two instructions, then print registers:
-
+```
 (gdb) reverse-stepi0x00007ffff34ad40d in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5  
 (gdb) reverse-stepi0x00007ffff34ad40b in doupdate () from /lib/x86_64-linux-gnu/libncursesw.so.5  
 (gdb) i rrax            0x7ffff3e8f948   140737285519688  
@@ -397,7 +398,7 @@ fs             0x0  0
 gs             0x0  0  
 (gdb) p/a 0x7ffff3e8f948  
 $1 = 0x7ffff3e8f948 <cur_term>
-
+```
 So, back to finding the "cur_term" clue. I really want to read the source code at this point, but I'll start with debug info.
 
 ## 11. Debug Info
