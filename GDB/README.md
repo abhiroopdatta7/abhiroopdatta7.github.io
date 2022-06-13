@@ -332,7 +332,8 @@ gdb has a great feature called reverse stepping, which Greg Law included in his 
 
 I'll start a python session again, to show this from the beginning:
 
-# gdb `which python`  
+```
+gdb `which python`  
 GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1  
 Copyright (C) 2016 Free Software Foundation, Inc.  
 License GPLv3+: GNU GPL version 3 or later  
@@ -348,7 +349,7 @@ Find the GDB manual and other documentation resources online at:
 For help, type "help".  
 Type "apropos word" to search for commands related to "word"...  
 Reading symbols from /usr/bin/python...(no debugging symbols found)...done.
-
+```
 Now I'll set a breakpoint on doupdate as before, but once it's hit, I'll enable recording, then continue the program and let it crash. Recording adds considerable overhead, so I don't want to add it on main.
 
 (gdb) b doupdateFunction "doupdate" not defined.  
@@ -402,15 +403,15 @@ So, back to finding the "cur_term" clue. I really want to read the source code a
 ## 11. Debug Info
 
 This is libncursesw, and I don't have debug info installed (Ubuntu):
-
+```
 # apt-cache search libncurseswlibncursesw5 - shared libraries for terminal handling (wide character support)  
 libncursesw5-dbg - debugging/profiling libraries for ncursesw  
 libncursesw5-dev - developer's libraries for ncursesw  
 # dpkg -l | grep libncursesw  
 ii  libncursesw5:amd64                  6.0+20160213-1ubuntu1                    amd64        shared libraries for terminal handling (wide character support)
-
+```
 I'll add that:
-
+```
 # apt-get install -y libncursesw5-dbgReading package lists... Done  
 Building dependency tree        
 Reading state information... Done  
@@ -426,9 +427,9 @@ Setting up libncursesw5-dbg (6.0+20160213-1ubuntu1) ...
 # dpkg -l | grep libncursesw  
 ii  libncursesw5:amd64                  6.0+20160213-1ubuntu1                    amd64        shared libraries for terminal handling (wide character support)  
 ii  libncursesw5-dbg                    6.0+20160213-1ubuntu1                    amd64        debugging/profiling libraries for ncursesw
-
+```
 Good, those versions match. So how does our segfault look now?
-
+```
 # gdb `which python` /var/cores/core.python.30520GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1  
 [...]  
 warning: JITed object file architecture unknown is not compatible with target architecture i386:x86-64.  
@@ -462,6 +463,7 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #21 0x00007f0a3be10830 in __libc_start_main (main=0x49daf0 <main>, argc=2, argv=0x7ffd33d94838, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>,  
     stack_end=0x7ffd33d94828) at ../csu/libc-start.c:291  
 #22 0x000000000049da19 in _start ()
+```
 
 The stack trace looks a bit different: we aren't really in doupdate(), but ClrBlank(), which has been inlined in ClrUpdate(), and inlined in doupdate().
 
@@ -470,7 +472,7 @@ Now I really want to see source.
 ## 12. Source Code
 
 With the debug info package installed, gdb can list the source along with the assembly:
-
+```
 (gdb) disas/s  
 Dump of assembler code for function doupdate:  
 /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c:  
@@ -501,13 +503,13 @@ Dump of assembler code for function doupdate:
 => 0x00007f0a37aac40d <+301>: mov    0x10(%rsi),%rdi  
    0x00007f0a37aac411 <+305>: cmpb   $0x0,0x1c(%rdi)  
    0x00007f0a37aac415 <+309>: jne    0x7f0a37aac6f7 <doupdate+1047>
-
+```
 Great! See the arrow "=>" and the line of code above it. So we're segfaulting on "if (back_color_erase)"? That doesn't seem possible. (A segfault would be due to a memory dereference, which in C would be a->b or *a, but in this case it's just "back_color_erase", which looks like it's accessing an ordinary variable and not dereferencing memory.)
 
 At this point I double checked that I had the right debug info version, and re-ran the application to segfault it in a live gdb session. Same place.
 
 Is there something special about back_color_erase? We're in ClrBlank(), so I'll list that source code:
-
+```
 (gdb) list ClrBlank1124     
 1125    static NCURSES_INLINE NCURSES_CH_T  
 1126    ClrBlank(NCURSES_SP_DCLx WINDOW *win)  
@@ -518,7 +520,7 @@ Is there something special about back_color_erase? We're in ClrBlank(), so I'l
 1131        return blank;  
 1132    }  
 1133   
-
+```
 Ah, that's not defined in the function, so it's a global?
 
 13. TUI
@@ -526,7 +528,7 @@ Ah, that's not defined in the function, so it's a global?
 It's worth showing how this looks in the gdb text user interface (TUI), which I haven't used that much but was inspired after seeing Greg's talk.
 
 You can launch it using --tui:
-
+```
 # gdb --tui `which python` /var/cores/core.python.30520   ┌───────────────────────────────────────────────────────────────────────────┐  
    │                                                                           │  
    │                                                                           │  
@@ -551,9 +553,9 @@ There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
 and "show warranty" for details.  
 This GDB was configured as "x86_64-linux-gnu".  
 ---Type  to continue, or q  to quit---
-
+```
 It's complaining about no Python source. I could fix that, but we're crashing in libncursesw. Hitting enter lets it finish loading, at which point it loads the libncursesw debug info source code:
-
+```
    ┌──/build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c──────┐  
    │1124                                                                       │  
    │1125    static NCURSES_INLINE NCURSES_CH_T                                 │  
@@ -578,11 +580,11 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #0  ClrBlank (win=0x1993060)  
     at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c:1129  
 (gdb)
-
+```
 Awesome!
 
 The arrow ">" shows the line of code that we crashed in. It gets even better: with the layout split command we can follow the source with the disassembly in separate windows:
-
+```
    ┌──/build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c──────┐  
   >│1129        if (back_color_erase)                                          │  
    │1130            AddAttr(blank, (AttrOf(BCE_BKGD(SP_PARM, win)) & BCE_ATTRS)│  
@@ -610,7 +612,7 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #0  ClrBlank (win=0x1993060)  
     at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c:1129  
 (gdb) layout split
-
+```
 Greg demonstrated this with reverse stepping, so you can imagine following both code and assembly execution at the same time (I'd need a video to demonstrate that here).
 
 14. External: cscope
@@ -618,13 +620,13 @@ Greg demonstrated this with reverse stepping, so you can imagine following both 
 I still want to learn more about back_color_erase, and I could try gdb's search command, but I've found I'm quicker using an external tool: cscope. cscope is a text-based source code browser from Bell Labs in the 1980's. If you have a modern IDE that you prefer, use that instead.
 
 Setting up cscope:
-
+```
 # apt-get install -y cscope# wget [http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/ncurses_6.0+20160213.orig.tar.gz](http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/ncurses_6.0+20160213.orig.tar.gz)# tar xvf ncurses_6.0+20160213.orig.tar.gz# cd ncurses-6.0-20160213# cscope -bqR# cscope -dq
 
 cscope -bqR builds the lookup database. cscope -dq then launches cscope.
-
+```
 Searching for back_color_erase definition:
-
+```
 Cscope version 15.8b                                   Press the ? key for help
 
 Find this C symbol:  
@@ -637,9 +639,9 @@ Find this egrep pattern:
 Find this file:  
 Find files #including this file:  
 Find assignments to this symbol:
-
+```
 Hitting enter:
-
+```
 [...]  
 #define non_dest_scroll_region         CUR Booleans[26]  
 #define can_change                     CUR Booleans[27]  
@@ -648,17 +650,17 @@ Hitting enter:
 #define col_addr_glitch                CUR Booleans[30]  
 #define cr_cancels_micro_mode          CUR Booleans[31]  
 [...]
-
+```
 Oh, a #define. (They could have at least capitalized it, as is a common style with #define's.)
 
 Ok, so what's CUR? Looking up definitions in cscope is a breeze.
-
+```
 #define CUR cur_term->type.                                                    
-
+```
 At least that #define is capitalized!
 
 We'd found cur_term earlier, by stepping instructions and examining registers. What is it?
-
+```
 #if 0 && !0  
 extern NCURSES_EXPORT_VAR(TERMINAL *) cur_term;  
 #elif 0  
@@ -667,11 +669,11 @@ NCURSES_WRAPPED_VAR(TERMINAL *, cur_term);
 #else  
 extern NCURSES_EXPORT_VAR(TERMINAL *) cur_term;  
 #endif
-
+```
 cscope read /usr/include/term.h for this. So, more macros. I had to highlight in bold the line of code I think is taking effect there. Why is there an "if 0 && !0 ... elif 0"? I don't know (I'd need to read more source). Sometimes programmers use "#if 0" around debug code they want to disable in production, however, this looks auto-generated.
 
 Searching for NCURSES_EXPORT_VAR finds:
-
+```
 #  define NCURSES_EXPORT_VAR(type) NCURSES_IMPEXP type
 
 ... and NCURSES_IMPEXP:
@@ -689,9 +691,9 @@ Searching for NCURSES_EXPORT_VAR finds:
 #if !defined(NCURSES_EXPORT_VAR)       
 #  define NCURSES_EXPORT_VAR(type) NCURSES_IMPEXP type  
 #endif 
-
+```
 ... and TERMINAL was:
-
+```
 typedef struct term {       /* describe an actual terminal */  
     TERMTYPE    type;       /* terminal type description */  
     short   Filedes;    /* file description being written to */  
@@ -700,19 +702,19 @@ typedef struct term {       /* describe an actual terminal */
     int     _baudrate;  /* used to compute padding */  
     char *      _termname;      /* used for termname() */  
 } TERMINAL;
-
+```
 Gah! Now TERMINAL is capitalized. Along with the macros, this code is not that easy to follow...
 
 Ok, who actually sets cur_term? Remember our problem is that it's set to zero, maybe because it's uninitialized or explicitly set. Browsing the code paths that set it might provide more clues, to help answer why it isn't being set, or why it is set to zero. Using the first option in cscope:
-
+```
 Find this C symbol: cur_term  
 Find this global definition:  
 Find functions called by this function:  
 Find functions calling this function:  
 [...]
-
+```
 And browsing the entries quickly finds:
-
+```
 NCURSES_EXPORT(TERMINAL *)  
 NCURSES_SP_NAME(set_curterm) (NCURSES_SP_DCLx TERMINAL * termp)  
 {  
@@ -728,7 +730,7 @@ _nc_lock_global(curses);
     CurTerm = termp;  
 #else    cur_term = termp;  
 #endif
-
+```
 I added the highlighting. Even the function name is wrapped in a macro. But at least we've found how cur_term is set: via set_curterm(). Maybe that isn't being called?
 
 15. External: perf-tools/ftrace/uprobes
@@ -736,23 +738,23 @@ I added the highlighting. Even the function name is wrapped in a macro. But at l
 I'll cover using gdb for this in a moment, but I can't help trying the uprobe tool from my [perf-tools](https://github.com/brendangregg/perf-tools) collection, which uses Linux ftrace and uprobes. One advantage of using tracers is that they don't pause the target process, like gdb does (although that doesn't matter for this cachetop.py example). Another advantage is that I can trace a few events or a few thousand just as easily.
 
 I should be able to trace calls to set_curterm() in libncursesw, and even print the first argument:
-
+```
 # /apps/perf-tools/bin/uprobe 'p:/lib/x86_64-linux-gnu/libncursesw.so.5:set_curterm %di'  
 ERROR: missing symbol "set_curterm" in /lib/x86_64-linux-gnu/libncursesw.so.5
-
+```
 Well, that didn't work. Where is set_curterm()? There are lots of ways to find it, like gdb or objdump:
-
+```
 (gdb) info symbol set_curterm  
 set_curterm in section .text of /lib/x86_64-linux-gnu/libtinfo.so.5
 
 # objdump -tT /lib/x86_64-linux-gnu/libncursesw.so.5 | grep cur_term0000000000000000      DO *UND*  0000000000000000  NCURSES_TINFO_5.0.19991023 cur_term  
 # objdump -tT /lib/x86_64-linux-gnu/libtinfo.so.5 | grep cur_term  
 0000000000228948 g    DO .bss   0000000000000008  NCURSES_TINFO_5.0.19991023 cur_term
-
+```
 gdb works better. Plus if I took a closer look at the source, I would have noticed it was building it for libtinfo.
 
 Trying to trace set_curterm() in libtinfo:
-
+```
 # /apps/perf-tools/bin/uprobe 'p:/lib/x86_64-linux-gnu/libtinfo.so.5:set_curterm %di'  
 Tracing uprobe set_curterm (p:set_curterm /lib/x86_64-linux-gnu/libtinfo.so.5:0xfa80 %di). Ctrl-C to end.  
           python-31617 [007] d... 24236402.719959: set_curterm: (0x7f116fcc2a80) arg1=0x1345d70  
@@ -760,11 +762,11 @@ Tracing uprobe set_curterm (p:set_curterm /lib/x86_64-linux-gnu/libtinfo.so.5:0x
           python-31617 [007] d... 24236402.723804: set_curterm: (0x7f116fcc2a80) arg1=0x14cdfa0  
           python-31617 [007] d... 24236402.723838: set_curterm: (0x7f116fcc2a80) arg1=0x0  
 ^C
-
+```
 That works. So set_curterm() is called, and has been called four times. The last time it was passed zero, which sounds like it could be the problem.
 
 If you're wondering how I knew the %di register was the first argument, then it comes from the AMD64/x86_64 ABI (and the assumption that this compiled library is ABI compliant). Here's a reminder:
-
+```
 # man syscall  
 [...]  
        arch/ABI      arg1  arg2  arg3  arg4  arg5  arg6  arg7  Notes  
@@ -784,20 +786,20 @@ If you're wondering how I knew the %di register was the first argument, then it 
        sparc/64      o0    o1    o2    o3    o4    o5    -  
        x86_64        rdi   rsi   rdx   r10   r8    r9    -  
 [...]  
-
+```
 I'd also like to see a stack trace for arg1=0x0 invocation, but this ftrace tool doesn't support stack traces yet.
 
 16. External: bcc/BPF
 
 Since we're debugging a bcc tool, cachetop.py, it's worth noting that bcc's trace.py has capabilities like my older uprobe tool:
-
+```
 # ./trace.py 'p:tinfo:set_curterm "%d", arg1'  
 TIME     PID    COMM         FUNC             -  
 01:00:20 31698  python       set_curterm      38018416  
 01:00:20 31698  python       set_curterm      38396640  
 01:00:20 31698  python       set_curterm      39624608  
 01:00:20 31698  python       set_curterm      0
-
+```
 Yes, we're using bcc to debug bcc!
 
 If you are new to [bcc](https://github.com/iovisor/bcc), it's worth checking it out. It provides Python and lua interfaces for the new BPF tracing features that are in the Linux 4.x series. In short, it allows lots of performance tools that were previously impossible or prohibitively expensive to run. I've posted instructions for running it on [Ubuntu Xenial](http://www.brendangregg.com/blog/2016-06-14/ubuntu-xenial-bcc-bpf.html).
@@ -809,7 +811,7 @@ The bcc trace.py tool should have a switch for printing user stack traces, since
 I should really have used gdb breakpoints on set_curterm() to start with, but I hope that was an interesting detour through ftrace and BPF.
 
 Back to live running mode:
-
+```
 # gdb `which python`GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1  
 [...]  
 (gdb) b set_curtermFunction "set_curterm" not defined.  
@@ -836,11 +838,11 @@ Continuing.
 
 Breakpoint 1, set_curterm (termp=0x0) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
 80  {
-
+```
 Ok, at this breakpoint we can see that set_curterm() is being invoked with a termp=0x0 argument, thanks to debuginfo for that information. If I didn't have debuginfo, I could just print the registers on each breakpoint.
 
 I'll print the stack trace so that we can see who was setting curterm to 0.
-
+```
 (gdb) bt  
 #0  set_curterm (termp=0x0) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
 #1  0x00007ffff5a44e75 in llvm::sys::Process::FileDescriptorHasColors(int) () from /usr/lib/x86_64-linux-gnu/libbcc.so.0  
@@ -884,22 +886,22 @@ I'll print the stack trace so that we can see who was setting curterm to 0.
 #37 0x00007ffff7811830 in __libc_start_main (main=0x49daf0 <main>, argc=2, argv=0x7fffffffdfb8, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>,  
     stack_end=0x7fffffffdfa8) at ../csu/libc-start.c:291  
 #38 0x000000000049da19 in _start ()
-
+```
 Ok, more clues...I think. We're in llvm::sys::Process::FileDescriptorHasColors(). The llvm compiler?
 
 18. External: cscope, take 2
 
 More source code browsing using cscope, this time in llvm. The FileDescriptorHasColors() function has:
-
+```
 static bool terminalHasColors(int fd) {  
 [...]  
   // Now extract the structure allocated by setupterm and free its memory  
   // through a really silly dance.  
   struct term *termp = set_curterm((struct term *)nullptr);  
   (void)del_curterm(termp); // Drop any errors here.
-
+```
 Here's what that code used to be in an earlier version:
-
+```
 static bool terminalHasColors() {  
   if (const char *term = std::getenv("TERM")) {  
     // Most modern terminals support ANSI escape sequences for colors.  
@@ -911,7 +913,7 @@ static bool terminalHasColors() {
   }  
   return false;  
 }
-
+```
 It [became](https://github.com/llvm-mirror/llvm/commit/d485e7bd7639cd6b39c6113a30fbc3cdc8c41c4c#diff-a4fb6575a290937bc9142e3d7efc8989) a "silly dance" involving calling set_curterm() with a null pointer.
 
 ## 19. Writing Memory
@@ -919,7 +921,7 @@ It [became](https://github.com/llvm-mirror/llvm/commit/d485e7bd7639cd6b39c6113a
 As an experiment and to explore a possible workaround, I'll modify memory of the running process to avoid the set_curterm() of zero.
 
 I'll run gdb, set a breakpoint on set_curterm(), and take it to the zero invocation:
-
+```
 # gdb `which python`GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1                                   
 [...]  
 (gdb) b set_curtermFunction "set_curterm" not defined.  
@@ -946,13 +948,13 @@ Continuing.                                  �
                                                                                 
 Breakpoint 1, set_curterm (termp=0x0) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
 80      {
-
+```
 At this point I'll use the set command to overwrite memory and replace zero with the previous argument of set_curterm(), 0xbecb90, seen above, on the hope that it's still valid.
 
 WARNING: Writing memory is not safe! gdb won't ask "are you sure?". If you get it wrong or make a typo, you will corrupt the application. Best case, your application crashes immediately, and you realize your mistake. Worst case, your application continues with silently corrupted data that is only discovered years later.
 
 In this case, I'm experimenting on a lab machine with no production data, so I'll continue. I'll print the value of the %rdi register as hex (p/x), then set it to the previous address, print it again, then print all registers:
-
+```
 (gdb) p/x $rdi$1 = 0x0  
 (gdb) set $rdi=0xbecb90(gdb) p/x $rdi$2 = 0xbecb90  
 (gdb) i r  
@@ -980,11 +982,11 @@ ds             0x0  0
 es             0x0  0  
 fs             0x0  0  
 gs             0x0  0
-
+```
 (Since at this point I have debug info installed, I don't need to refer to registers in this case, I could have called set on "termp", the variable name argument to set_curterm(), instead of $rdi.)
 
 %rdi is now populated, so those registers look ok to continue.
-
+```
 (gdb) c  
 Continuing.
 
@@ -1000,7 +1002,7 @@ warning: JITed object file architecture unknown is not compatible with target ar
 Program received signal SIGSEGV, Segmentation fault.  
 0x00007ffff34ad411 in ClrBlank (win=0xaea060) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tty/tty_update.c:1129  
 1129        if (back_color_erase)
-
+```
 Ahhh. That's what I get for writing memory. So this experiment ended in another segfault.
 
 ## 20. Conditional Breakpoints
@@ -1008,7 +1010,7 @@ Ahhh. That's what I get for writing memory. So this experiment ended in another 
 In the previous section, I had to use three continues to reach the right invocation of a breakpoint. If that were hundreds of invocations, then I'd use a conditional breakpoint. Here's an example.
 
 I'll run the program and break on set_curterm() as usual:
-
+```
 # gdb `which python`GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1                                   
 [...]  
 (gdb) b set_curtermFunction "set_curterm" not defined.  
@@ -1021,9 +1023,9 @@ Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 
 Breakpoint 1, set_curterm (termp=termp@entry=0xa43150) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
 80  {
-
+```
 Now I'll turn breakpoint 1 into a conditional breakpoint, so that it only fires when the %rdi register is zero:
-
+```
 (gdb) cond 1 $rdi==0x0(gdb) i bNum     Type           Disp Enb Address            What  
 1       breakpoint     keep y   0x00007ffff3c76a80 in set_curterm at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
     stop only if $rdi==0x0  
@@ -1033,7 +1035,7 @@ Continuing.
 
 Breakpoint 1, set_curterm (termp=0x0) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/lib_cur_term.c:80  
 (gdb)
-
+```
 Neat! cond is short for conditional. So why didn't I run it right away, when I first created the "pending" breakpoint? I've found conditionals don't work on pending breakpoints, at least on this gdb version. (Either that or I'm doing it wrong.) I also used i b here (info breakpoints) to list them with information.
 
 ## 21. Returns
@@ -1043,7 +1045,7 @@ I did try another write-like hack, but this time changing the instruction path r
 WARNING: see previous warning, which also applies here.
 
 I'll take us to the set_curterm() 0x0 breakpoint as before, and then issue a ret (short for return), which will return from the function immediately and not execute it. My hope is that by not executing it, it won't set the global curterm to 0x0.
-
+```
 [...]  
 (gdb) c  
 Continuing.
@@ -1057,11 +1059,11 @@ Continuing.
 Program received signal SIGSEGV, Segmentation fault.  
                                                     _nc_free_termtype (ptr=ptr@entry=0x100) at /build/ncurses-pKZ1BN/ncurses-6.0+20160213/ncurses/tinfo/free_ttype.c:52  
 52      FreeIfNeeded(ptr->str_table);
-
+```
 Another crash. Again, that's what I get for messing in this way.
 
 One more try. After browsing the code a bit more, I want to try doing a ret twice, in case the parent function is also involved. Again, this is just a hacky experiment:
-
+```
 [...]  
 (gdb) c  
 Continuing.
@@ -1071,9 +1073,9 @@ Breakpoint 1, set_curterm (termp=0x0) at /build/ncurses-pKZ1BN/ncurses-6.0+20160
 (gdb) retMake set_curterm return now? (y or n) y#0  0x00007ffff5a44e75 in llvm::sys::Process::FileDescriptorHasColors(int) () from /usr/lib/x86_64-linux-gnu/libbcc.so.0  
 (gdb) retMake selected stack frame return now? (y or n) y#0  0x00007ffff45cabb8 in clang::driver::tools::Clang::ConstructJob(clang::driver::Compilation&, clang::driver::JobAction const&, clang::driver::InputInfo const&, llvm::SmallVector const&, llvm::opt::ArgList const&, char const*) const () from /usr/lib/x86_64-linux-gnu/libbcc.so.0  
 (gdb) c
-
+```
 The screen goes blank and pauses...then redraws:
-
+```
 07:44:22 Buffers MB: 61 / Cached MB: 1246  
 PID      UID      CMD              HITS     MISSES   DIRTIES  READ_HIT%  WRITE_HIT%  
     2742 root     systemd-logind          3       66        2       1.4%      95.7%  
@@ -1098,19 +1100,19 @@ PID      UID      CMD              HITS     MISSES �
    15864 root     dirname               468        0        2      99.6%       0.0%  
    15856 root     ls                    476        0        2      99.6%       0.0%  
 [...]
-
+```
 Wow! It's working!
 
 ## 22. A Better Workaround
 
 I'd been posting debugging output to [github](https://github.com/iovisor/bcc/pull/615), especially since the lead BPF engineer, Alexei Starovoitov, is also well versed in llvm internals, and the root cause seemed to be a bug in llvm. While I was messing with writes and returns, he suggested adding the llvm option -fno-color-diagnostics to bcc, to avoid this problem code path. It worked! It was added to bcc as a workaround. (And we should get that llvm bug fixed.)
-
+```
 ## 23. Python Context
-
+```
 At this point we've fixed the problem, but you might be curious to see the stack trace fully fixed.
 
 Adding python-dbg:
-
+```
 # apt-get install -y python-dbg  
 Reading package lists... Done  
 [...]  
@@ -1124,9 +1126,9 @@ The following NEW packages will be installed:
 Need to get 11.9 MB of archives.  
 After this operation, 36.4 MB of additional disk space will be used.  
 [...]
-
+```
 Now I'll rerun gdb and view the stack trace:
-
+```
 # gdb `which python` /var/cores/core.python.30520GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.04) 7.11.1  
 [...]  
 Reading symbols from /usr/bin/python...Reading symbols from /usr/lib/debug/.build-id/4e/a0539215b2a9e32602f81c90240874132c1a54.debug...done.  
@@ -1163,11 +1165,11 @@ Reading symbols from /usr/bin/python...Reading symbols from /usr/lib/debug/.buil
 #25 0x00007f0a3be10830 in __libc_start_main (main=0x49daf0 <main>, argc=2, argv=0x7ffd33d94838, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>,  
     stack_end=0x7ffd33d94828) at ../csu/libc-start.c:291  
 #26 0x000000000049da19 in _start ()
-
+```
 No more "??"'s, but not hugely more helpful, yet.
 
 The python debug packages have added other capabilities to gdb. Now we can look at the python backtrace:
-
+```
 (gdb) py-bt  
 Traceback (most recent call first):  
   File "./cachetop.py", line 188, in handle_loop  
@@ -1176,9 +1178,9 @@ Traceback (most recent call first):
     return func(stdscr, *args, **kwds)  
   File "./cachetop.py", line 260, in  
     curses.wrapper(handle_loop, args)
-
+```
 ... and Python source list:
-
+```
 (gdb) py-list 183        b.attach_kprobe(event="mark_buffer_dirty", fn_name="do_count")  
  184     
  185        exiting = 0  
@@ -1190,6 +1192,7 @@ Traceback (most recent call first):
  191            elif s == ord('r'):  
  192                sort_reverse = not sort_reverse  
  193            elif s == ord('<'):
+```
 
 It's identifying where in our Python code we were executing that hit the segfault. That's really nice!
 
