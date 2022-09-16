@@ -215,6 +215,18 @@ Shows top-level processes within the container.
 docker top ${containor-id}
 ````
 
+#### Save
+Save the Docker image to a local file.
+```shell
+docker save ${image} -o ${filename}
+```
+
+#### Load
+Load Docker image from file
+```shell
+docker load ${filename}
+```
+
 ## More
 - [Dockerfile](Dockerfile.md)
 
