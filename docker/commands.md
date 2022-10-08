@@ -1,25 +1,29 @@
 [< Docker](README.md)
 
 ## Commads
-
+| command         |    description     |
+|:--------------- |:------------------:|
+| docker images   | list docker images |
+| docker image ls |                    |
+|                 |                    |
 ### Image
 
 #### List
-```she
+```sh
 docker iamges
 ```
 or
-```she
+```sh
 docker image ls
 ```
 
 #### Pull
-```shell
+```sh
 docker pull ${image-name}
 ```
 
 #### Remove
-```shell
+```sh
 docker rmi ${containor-id}
 ```
 
@@ -29,94 +33,94 @@ docker rmi ${containor-id}
 
 #### Run
 
-```shell
+```sh
 docker run --rm --name ${container-name} ${image-name}:${tag}
 ```
 
 #### List
 
-```shel
+```sh
 docker ps
 ```
 
 or
 
-```shell
+```sh
 docker container ls
 ```
 
 The above command will only show the list of containers running. To show all the containers: 
 
-```shell
+```sh
 docker ps -a
 ```
 
 #### Pause
 
-```shell
+```sh
 docker pause ${containor-id}
 ```
 
 #### Unpause
 
-```shell
+```sh
 docker unpause ${containor-id}
 ```
 
 #### Stop
 
-```shell
+```sh
 docker stop ${containor-id}
 ```
 
 #### Start
 
-```shell
+```sh
 docker start ${containor-id}
 ```
 
 #### Attach
-```shell
+```sh
 docker attach ${containor-id}
 ```
 
 #### Kill
 
-```shell
+```sh
 docker kill ${containor-id}
 ```
 
 #### Remove
 Removes the Docker Container.
-```shell
+```sh
 docker rm ${containor-id}
 ```
 
 #### Stats
-```shell
+```sh
 docker stats ${containor-id}
 ```
 
 #### Inspect
 Shows the Information for the container.
-```shell
+```sh
 docker inspect ${containor-id}
 ```
 
 #### Top
 Shows top-level processes within the container.
-````shell
+````sh
 docker top ${containor-id}
 ````
 
 #### Save
 Save the Docker image to a local file.
-```shell
+```sh
 docker save ${image} -o ${filename}
 ```
 
 #### Load
 Load Docker image from file
-```shell
+```sh
 docker load ${filename}
 ```
