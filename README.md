@@ -1,8 +1,8 @@
 ## Language
-- [C](c.md)
+- [C](languages/c.md)
 	- [DPDK 20.11](languages/DPDK-20.11.3.md)
 		- [hello world](languages/DPDK-20.11.3-hello-world.md)
-- [Rust](rust.md)
+- [Rust](languages/rust.md)
 - [go-lang](languages/go-lang.md)
 
 ## Build Tool
