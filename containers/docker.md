@@ -16,11 +16,11 @@ process. taking no more memory than any other executable. making it lightweight.
 By Contrast. a Virtual (VM) runs a full-blown operating System With to host 
 through a hyper-visor. In general, VMS provide an environment with more resources than most applications need. 
 
-![vm_vs_docker](vm_vs_docker.png)
+![vm_vs_docker](images/vm_vs_docker.png)
 
 ## Lifecycle
 
-![docker_life_cycle](docker_life_cycle.png)
+![docker_life_cycle](images/docker_life_cycle.png)
 
 - Initially, the Docker container will be in the created state.
 - Then the Docker container goes into the running state when the Docker run command is used.

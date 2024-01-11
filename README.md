@@ -27,6 +27,7 @@
 - [Linux Virtualization](vm/README.md)
 	- [Virt-install options](vm/virt-install)
 - [Open Virtual Switch(OVS)](OVS/README.md)
+- [Emoji List](https://unicode.org/emoji/charts/emoji-list.html)
 
 
 ## About me
