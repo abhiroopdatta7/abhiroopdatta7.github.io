@@ -1,3 +1,10 @@
+## Install docker-compose
+
+```shell
+mkdir -p ~/.docker/cli-plugins/
+curl -SL https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-linux-x86_64 -o /usr/local/bin/dpcler-compose
+```
+
 ## Networking
 By default Docker-Compose will create a new network for the given compose file. You can change the behavior by defining custom networks in your compose file.
 ### Create and assign custom network

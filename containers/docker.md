@@ -81,7 +81,14 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io
 ```
 
+### Ubuntu 22.04
 
+Install
+
+```shell
+sudo apt update
+sudo apt install docker.io
+```
 
 ## Post-installation steps for Linux (optional)
 
