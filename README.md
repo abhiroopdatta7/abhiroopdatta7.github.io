@@ -1,6 +1,6 @@
 These are just some basic notes I keep whenever I try to learn something new. 
 
-You can bookmark this page to use this notes.
+You can bookmark this page to use these notes.
 
 ## Language
 - [C](languages/c.md)

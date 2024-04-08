@@ -41,3 +41,89 @@ Now try to run make again. The output should display only this:
 $ make
 Hello World
 ```
+
+Let's add a few more phony targets: generate and clean to the Makefile:
+
+```Makefile
+say_hello:
+        @echo "Hello World"
+
+generate:
+ @echo "Creating empty text files..."
+ touch file-{1..10}.txt
+
+clean:
+ @echo "Cleaning up..."
+ rm *.txt
+```
+
+If we try to run make after the changes, only the target say_hello will be executed. That's because only the first target in the makefile is the default target. Often called the default goal, this is the reason you will see all as the first target in most projects. It is the responsibility of all to call other targets. We can override this behavior using a special phony target called .DEFAULT_GOAL.
+
+Let's include that at the beginning of our makefile:
+
+```Makefile
+.DEFAULT_GOAL := generate
+```
+
+This will run the target generate as the default:
+
+```output
+$ make
+Creating empty text files...
+touch file-{1..10}.txt
+```
+
+As the name suggests, the phony target .DEFAULT_GOAL can run only one target at a time. This is why most makefiles include all as a target that can call as many targets as needed.
+
+Let's include the phony target all and remove .DEFAULT_GOAL:
+
+```Makefile
+all: say_hello generate
+
+say_hello:
+ @echo "Hello World"
+
+generate:
+ @echo "Creating empty text files..."
+ touch file-{1..10}.txt
+
+clean:
+ @echo "Cleaning up..."
+ rm *.txt
+```
+
+Before running make, let's include another special phony target, .PHONY, where we define all the targets that are not files. make will run its recipe regardless of whether a file with that name exists or what its last modification time is. Here is the complete makefile:
+
+```Makefile
+.PHONY: all say_hello generate clean
+
+all: say_hello generate
+
+say_hello:
+ @echo "Hello World"
+
+generate:
+ @echo "Creating empty text files..."
+ touch file-{1..10}.txt
+
+clean:
+ @echo "Cleaning up..."
+ rm *.txt
+```
+
+The make should call say_hello and generate:
+
+```output
+$ make
+Hello World
+Creating empty text files...
+touch file-{1..10}.txt
+```
+
+It is a good practice not to call clean in all or put it as the first target. clean should be called manually when cleaning is needed as a first argument to make:
+
+```output
+$ make clean
+Cleaning up...
+rm *.txt
+```
