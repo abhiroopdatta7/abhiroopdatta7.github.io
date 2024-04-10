@@ -30,10 +30,15 @@ You can bookmark this page to use these notes.
 - [k9s](kubernetes/k9s.md)
 - [kubectl](kubernetes/kubectl.md)
 
-## Misc
+##  Virtualization
 - [Linux Virtualization](vm/README.md)
 	- [Virt-install options](vm/virt-install)
 - [Open Virtual Switch(OVS)](OVS/README.md)
+
+## Automation
+- [Ansible](ansible/ansible.md)
+
+## Misc
 - [Emoji List](https://unicode.org/emoji/charts/emoji-list.html)
 
 
