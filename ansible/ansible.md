@@ -17,9 +17,14 @@ The managed machines are represented in a simplistic inventory file that groups 
 
 - Tasks: Units of action that combine a module and its arguments along with some other parameters.
 
-​​- Playbooks: An ordered list of tasks along with its necessary parameters that define a recipe to configure a system.
+- Playbooks: An ordered list of tasks along with its necessary parameters that define a recipe to configure a system.
 
 - Roles: Redistributable units of organization that allow users to share automation code easier.
 
 - YAML: A popular and simple data format that is very clean and understandable by humans.
 
+
+
+## Inventory
+
+A tipical inventory file looks like bellow.
