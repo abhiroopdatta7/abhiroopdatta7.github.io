@@ -14,7 +14,7 @@ InfiniBand (IB) is a computer networking communications standard used in high-pe
 
 ## iWARP
 
-iWARP is a computer networking protocol that implements remote direct memory access (RDMA) for efficient data transfer over Internet Protocol networks. iWARP is not an acronym.
+iWARP is a computer networking protocol that implements remote direct memory access (RDMA) for efficient data transfer over TCP on Internet Protocol networks. iWARP is not an acronym.
 
 ## IP Explicit Congestion Notification
 
