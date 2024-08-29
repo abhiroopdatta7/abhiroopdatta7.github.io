@@ -76,7 +76,6 @@ By limiting the injection rate of ports A-F to something which port G can handle
 
 | Term | Description                               |
 | :--- | :---------------------------------------- |
-| ECN  | Explicit Congestion Notification          |
 | RP   | Reaction Point                            |
 | NP   | Notification Point                        |
 | CP   | Congestion Port                           |
