@@ -1,10 +1,12 @@
 # RoCE
 
-RDMA over Converged Ethernet (RoCE) is a network protocol which allows remote direct memory access (RDMA) over an Ethernet network. There are multiple RoCE versions. RoCE v1 is an Ethernet link layer protocol and hence allows communication between any two hosts in the same Ethernet broadcast domain. RoCE v2 is an internet layer protocol which means that RoCE v2 packets can be routed. Although the RoCE protocol benefits from the characteristics of a converged Ethernet network, the protocol can also be used on a traditional or non-converged Ethernet network.
+**RDMA** over Converged Ethernet (RoCE) is a network protocol which allows remote direct memory access (RDMA) over an Ethernet network. There are multiple RoCE versions. RoCE v1 is an Ethernet link layer protocol and hence allows communication between any two hosts in the same Ethernet broadcast domain. RoCE v2 is an internet layer protocol which means that RoCE v2 packets can be routed. Although the RoCE protocol benefits from the characteristics of a converged Ethernet network, the protocol can also be used on a traditional or non-converged Ethernet network.
 
 ## RoCE v2
 
-The RoCE v2 protocol exists on top of either the UDP/IPv4 or the UDP/IPv6 protocol. The UDP destination port number 4791 has been reserved for RoCE v2. Since RoCEv2 packets are routable the RoCE v2 protocol is sometimes called Routable RoCE or RRoCE. Although in general the delivery order of UDP packets is not guaranteed, the RoCEv2 specification requires that packets with the same UDP source port and the same destination address must not be reordered. In addition, RoCEv2 defines a congestion control mechanism that uses the IP ECN(Explicit Congestion Notification) bits for marking and CNP frames for the acknowledgment notification. Software support for RoCE v2 is still emerging. Mellanox OFED 2.3 or later has RoCE v2 support and also Linux Kernel v4.5
+The RoCE v2 protocol exists on top of either the **UDP/IPv4** or the **UDP/IPv6** protocol. The UDP destination port number **4791** has been reserved for RoCE v2. Since RoCEv2 packets are routable the RoCE v2 protocol is sometimes called Routable RoCE or RRoCE. Although in general the delivery order of UDP packets is not guaranteed, the RoCEv2 specification requires that packets with the same UDP source port and the same destination address must not be reordered. In addition, RoCEv2 defines a congestion control mechanism that uses the IP [ECN](#ip-explicit-congestion-notification) bits for marking and CNP frames for the acknowledgment notification. Software support for RoCE v2 is still emerging. Mellanox OFED 2.3 or later has RoCE v2 support and also Linux Kernel v4.5
+
+![RoCEv2 Network Infrastructure](images/RoCEv2_Network_Infra.png)
 
 ## InfiniBand
 
