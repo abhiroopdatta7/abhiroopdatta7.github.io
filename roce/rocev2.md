@@ -50,6 +50,9 @@ Conventionally, TCP/IP networks signal congestion by dropping packets. When ECN 
 ECN uses the two least significant (right-most) bits of the Traffic Class field in the IPv4 or IPv6 header to encode four different code points:
 
 00 – Not ECN-Capable Transport, Not-ECT
+
 01 – ECN Capable Transport(1), ECT(1)
+
 10 – ECN Capable Transport(0), ECT(0)
+
 11 – Congestion Experienced, CE.
