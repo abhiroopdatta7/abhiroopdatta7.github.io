@@ -49,10 +49,35 @@ Conventionally, TCP/IP networks signal congestion by dropping packets. When ECN 
 
 ECN uses the two least significant (right-most) bits of the Traffic Class field in the IPv4 or IPv6 header to encode four different code points:
 
-00 – Not ECN-Capable Transport, Not-ECT
+|  ECT  |  CE   | Description                            |
+| :---: | :---: | :------------------------------------- |
+|   0   |   0   | **Not-ECT**: Not ECN-Capable Transport |
+|   0   |   1   | **ECT(1)**: ECN Capable Transport(1)   |
+|   1   |   0   | **ECT(0)**: ECN Capable Transport(0)   |
+|   1   |   1   | **CE**: Congestion Experienced         |
 
-01 – ECN Capable Transport(1), ECT(1)
+### Network Congestion
 
-10 – ECN Capable Transport(0), ECT(0)
+Network congestion happens in the network switches when the incoming traffic is larger than the bandwidth of the outgoing link on which it has to be transmitted. Typical example is multiple senders that send traffic to the same destination in the same time. Switch buffers can handle temporal congestion, but when congestion is too long, switch buffer fills up to their buffering capacity. When switch buffer is full the next packets arriving packets are dropped. Dropping packets reduces application performance, due to the latency cost of re-transmission and complexity of transport protocol. Lossless networks implement mechanism of flow control, which pauses the traffic in the incoming link before the buffer overfills, and by that prevents case of dropping packets. However, flow control by itself causes congestion spreading problem.
 
-11 – Congestion Experienced, CE.
+![network congestion](images/network_congestion.png)
+
+To understand the congestion spreading problem consider the figure below. Assume that ports A through E on Switch 1 are all sending packets to port G so that port G is receiving data at 100% of its capability to send it. Also assume that port F, on adjacent Switch 2 is also transmitting data to port G on Switch 1 at 20% of the total link bandwidth. Since egress port G is backed up, port F will transmit packets until will be paused by flow control. At this point, port G will be congested, however there is no detrimental side effect, since all ports (A-F) will be served as quickly as port G is able to.
+
+Now consider a port X on Switch 2, which is sending packets to port Y on Switch 1, at 20% of the paths bandwidth. Port G, the source of the congestion is not anywhere in the path from port X to port Y. In this case one might expect that since port F was only using 20% of the inter-switch links bandwidth, the remaining 80% of the links bandwidth would be available for port X, much more than port X requires. However this is not the case, since traffic from port F will eventually cause the flow control to send pauses on the inter-switch link, and reduce the traffic from port X to 20% instead of potentially available 80%.
+
+### Network Congestion Control
+
+Congestion control is used to reduce packet drops in lossy networks or congestion spreading in lossless networks. It also reduces switch buffer occupancy, hence, decreases latency and improves burst tolerance. The approach is to limit the injection rate of flows at the ports which are the root cause of the congestion (ports A-F), so that other ports are not affected (port X).
+
+By limiting the injection rate of ports A-F to something which port G can handle, ports A-F should not see a significant degradation (after all, their packets were just going to wait anyway), however packets being sent from port X to port Y should be able to flow normally, since pauses will not be sent by flow control (congestion control aims to keep switch buffer occupancy low, so the flow control will not kick in).
+
+## Terminology
+
+| Term | Description                               |
+| :--- | :---------------------------------------- |
+| ECN  | Explicit Congestion Notification          |
+| RP   | Reaction Point                            |
+| NP   | Notification Point                        |
+| CP   | Congestion Port                           |
+| CNP  | The RoCEv2 Congestion Notification Packet |
